@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090a12">
+  <meta name="description" content="A clean, private handwritten digit recognition studio. Draw a number or upload an image.">
+  <title>HR — Handwriting, understood.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f7;
+      --surface: #fff;
+      --ink: #171719;
+      --muted: #85858d;
+      --line: #e8e8ec;
+      --blue: #1769e0;
+      --green: #16865b;
+      --shadow: 0 18px 55px rgb(32 36 58 / 4%);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); font-family: "DM Sans", sans-serif; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1120px, 100%); margin: auto; padding: 28px 28px 56px; }
+    nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 70px; }
+    .brand { display: flex; align-items: center; gap: 11px; font: 800 18px Manrope, sans-serif; letter-spacing: -.6px; }
+    .brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 11px; background: #171719; color: #fff; font: 800 18px Manrope; }
+    .nav-right { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #23a36f; box-shadow: 0 0 0 4px rgb(35 163 111 / 9%); }
+    .hero { margin-bottom: 44px; text-align: center; }
+    .eyebrow { margin-bottom: 16px; color: var(--blue); font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    .hero h1 { margin: 0; font: 800 clamp(38px, 5vw, 58px)/1.08 Manrope, sans-serif; letter-spacing: -3px; }
+    .hero h1 span { color: #a5a5ad; }
+    .hero p { margin: 17px 0 0; color: var(--muted); font-size: 15px; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(330px, .88fr); gap: 18px; align-items: stretch; }
+    .panel { padding: 23px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); }
+    .panel-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    .panel-title { font: 700 14px Manrope, sans-serif; letter-spacing: -.2px; }
+    .pill { padding: 6px 9px; border: 1px solid #ededf0; border-radius: 30px; background: #f4f4f6; color: #6c6c75; font-size: 10px; white-space: nowrap; }
+    .canvas-wrap { position: relative; width: 100%; aspect-ratio: 1.34; overflow: hidden; border-radius: 16px; background: #101116; touch-action: none; }
+    #board { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+    .canvas-label { position: absolute; bottom: 14px; left: 16px; color: rgb(255 255 255 / 40%); font-size: 10px; letter-spacing: .8px; pointer-events: none; text-transform: uppercase; }
+    .canvas-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 17px; }
+    .tool-group { display: flex; gap: 8px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 11px; background: #fff; color: #42424a; font-size: 12px; font-weight: 600; transition: background .18s ease, transform .18s ease; }
+    .btn:hover { transform: translateY(-1px); background: #f7f8fa; }
+    .btn-primary { padding: 11px 19px; border-color: var(--blue); background: var(--blue); color: #fff; box-shadow: 0 6px 15px rgb(23 105 224 / 15%); }
+    .btn-primary:hover { background: #0e5bc9; }
+    .btn:disabled { cursor: wait; opacity: .6; transform: none; }
+    .upload-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; padding: 13px 15px; border: 1px dashed #d9d9e0; border-radius: 13px; background: #fafafd; }
+    .upload-copy { min-width: 0; }
+    .upload-copy strong { display: block; font-size: 12px; }
+    .upload-copy span { color: var(--muted); font-size: 10px; }
+    #fileInput { display: none; }
+    .right-panel { display: flex; flex-direction: column; }
+    .result-stage { position: relative; display: flex; min-height: 200px; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #edf0f5; border-radius: 17px; background: #f7f9fc; }
+    .result-stage::before { position: absolute; top: -105px; right: -80px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, #e7efff 0, transparent 68%); content: ""; }
+    .result-caption { z-index: 1; color: var(--muted); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; }
+    .prediction { z-index: 1; margin: 8px 0; color: #171719; font: 800 104px/.98 Manrope, sans-serif; letter-spacing: -8px; }
+    .prediction.empty { color: #d4d7dd; }
+    .confidence { z-index: 1; color: #70717a; font-size: 12px; }
+    .confidence b { color: var(--blue); }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; margin: 22px 0 14px; }
+    .section-heading strong { font: 700 12px Manrope, sans-serif; }
+    .section-heading span { color: var(--muted); font-size: 10px; }
+    .scores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+    .score { display: grid; grid-template-columns: 14px 1fr 38px; align-items: center; gap: 8px; font-size: 11px; }
+    .score-label { color: #777982; font-weight: 600; }
+    .track { height: 6px; overflow: hidden; border-radius: 8px; background: #f0f1f4; }
+    .fill { width: 0; height: 100%; border-radius: 8px; background: #bdcbe2; transition: width .35s ease; }
+    .score-value { color: #8b8d95; font-size: 10px; font-variant-numeric: tabular-nums; text-align: right; }
+    .score.winner .score-label, .score.winner .score-value { color: var(--blue); font-weight: 700; }
+    .score.winner .fill { background: var(--blue); }
+    .message { min-height: 34px; margin-top: auto; padding-top: 16px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .message.error { color: #c23d47; }
+    .message.success { color: var(--green); }
+    footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 26px; padding: 0 4px; color: #a0a1a8; font-size: 10px; }
+    @media (max-width: 780px) {
+      .shell { padding: 20px 16px 40px; }
+      nav { margin-bottom: 48px; }
+      .workspace { grid-template-columns: 1fr; }
+      .right-panel { min-height: 480px; }
+      .hero { margin-bottom: 30px; }
+      .hero h1 { letter-spacing: -2px; }
+    }
+    @media (max-width: 420px) {
+      .panel { padding: 16px; border-radius: 18px; }
+      .canvas-tools { align-items: stretch; flex-direction: column; }
+      .tool-group { justify-content: space-between; }
+      .tool-group .btn { flex: 1; }
+      .canvas-tools > .btn { width: 100%; }
+      .scores { gap: 10px 9px; }
+      .nav-right { font-size: 11px; }
+      footer { flex-direction: column; }
+    }
+    /* Midnight / aurora redesign */
+    :root {
+      color-scheme: dark;
+      --bg: #080a12;
+      --surface: rgba(19, 22, 38, .78);
+      --ink: #f5f5ff;
+      --muted: #969bb9;
+      --line: rgba(170, 178, 235, .14);
+      --blue: #8b7cff;
+      --green: #6be6c0;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .28);
+    }
+    body {
+      background:
+        radial-gradient(ellipse at 12% 8%, rgba(102, 73, 255, .19), transparent 36%),
+        radial-gradient(ellipse at 91% 26%, rgba(43, 184, 230, .12), transparent 30%),
+        radial-gradient(ellipse at 52% 100%, rgba(124, 77, 255, .09), transparent 42%),
+        var(--bg);
+      color: var(--ink);
+      overflow-x: hidden;
+    }
+    .shell { width: min(1180px, 100%); padding-top: 30px; }
+    nav { margin-bottom: 76px; animation: float-in .7s cubic-bezier(.2,.8,.2,1) both; }
+    .brand { text-transform: lowercase; color: #f6f5ff; letter-spacing: -.8px; }
+    .brand-mark {
+      background: linear-gradient(145deg, #9b8aff, #52d7ed); color: #090a12;
+      border-radius: 12px; box-shadow: 0 0 30px rgba(139,124,255,.25);
+    }
+    .nav-right { color: #a8adc8; }
+    .dot { background: #6be6c0; box-shadow: 0 0 0 4px rgba(107,230,192,.09), 0 0 18px rgba(107,230,192,.65); }
+    .hero { margin-bottom: 46px; animation: float-in .8s .08s cubic-bezier(.2,.8,.2,1) both; }
+    .eyebrow { color: #b3aaff; letter-spacing: 2.6px; }
+    .hero h1 { letter-spacing: -3.8px; text-shadow: 0 8px 45px rgba(127,108,255,.12); }
+    .hero h1 span {
+      background: linear-gradient(100deg, #a99bff 5%, #74dff2 85%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero p { color: #a4a9c6; font-size: 15px; }
+    .workspace { gap: 20px; }
+    .panel {
+      position: relative; overflow: hidden; padding: 25px;
+      border: 1px solid rgba(177,183,255,.15); border-radius: 24px;
+      background: linear-gradient(145deg, rgba(25,29,49,.88), rgba(15,18,32,.9));
+      box-shadow: 0 24px 80px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.035);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      animation: float-in .85s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .panel::before { content:""; position:absolute; left:24px; right:24px; top:0; height:1px; background:linear-gradient(90deg,transparent,rgba(158,143,255,.48),transparent); }
+    .workspace > .panel:nth-child(2) { animation-delay: .13s; }
+    .panel-title { color: #f0efff; font-size: 14px; }
+    .pill { border: 1px solid rgba(160,151,255,.18); background: rgba(129,111,255,.1); color: #c1baff; }
+    .canvas-wrap {
+      aspect-ratio: 1.2; border: 1px solid rgba(160,167,230,.18); border-radius: 18px;
+      background-color: #090b16;
+      background-image: linear-gradient(rgba(147,155,210,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(147,155,210,.055) 1px, transparent 1px), radial-gradient(ellipse at 50% 50%, rgba(102,80,255,.10), transparent 72%);
+      background-size: 32px 32px, 32px 32px, auto; box-shadow: inset 0 0 45px rgba(0,0,0,.28);
+    }
+    .canvas-label { color: rgba(195,198,231,.46); font-size: 9px; letter-spacing: 1.1px; }
+    .btn { border: 1px solid rgba(169,177,230,.16); border-radius: 12px; background: rgba(255,255,255,.045); color: #d5d7f0; transition: all .22s ease; }
+    .btn:hover { border-color: rgba(169,155,255,.45); background: rgba(141,124,255,.12); box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+    .btn-primary { border: 0; background: linear-gradient(110deg, #8170ff, #45bde7); color: #080a14; font-weight: 800; box-shadow: 0 8px 26px rgba(109,100,255,.24); }
+    .btn-primary:hover { background: linear-gradient(110deg, #a092ff, #71d8f5); box-shadow: 0 10px 32px rgba(109,100,255,.34); }
+    .upload-row { border-color: rgba(169,177,230,.22); background: rgba(9,11,22,.45); border-radius: 15px; }
+    .upload-copy strong { color: #eeedff; }
+    .upload-copy span { color: #9298b8; }
+    .result-stage {
+      min-height: 225px; border: 1px solid rgba(159,164,231,.14); border-radius: 19px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(123,100,255,.15), transparent 60%), rgba(8,10,20,.56);
+      transition: border-color .3s ease, box-shadow .3s ease;
+    }
+    .result-stage::before { display:none; }
+    .result-orb { position:absolute; width:190px; height:190px; top:10px; left:calc(50% - 95px); border-radius:50%; background:radial-gradient(circle,rgba(105,91,255,.13),rgba(69,189,231,.035) 46%,transparent 70%); filter:blur(2px); pointer-events:none; }
+    .result-caption { color: #8f96b8; font-size: 9px; font-weight:700; letter-spacing: 2px; }
+    .prediction { margin: 11px 0 9px; color:#f6f3ff; font-size: 112px; line-height:.95; letter-spacing:-8px; text-shadow:0 0 48px rgba(147,129,255,.25); }
+    .prediction.empty { color:rgba(177,182,218,.22); }
+    .confidence { color:#a0a6c4; }
+    .confidence b { color:#a99aff; }
+    .section-heading strong { color:#edecff; }
+    .section-heading span { color:#8c93b4; }
+    .score-label { color:#9ba2c1; }
+    .track { height:7px; background:rgba(148,157,205,.12); }
+    .fill { background:linear-gradient(90deg,#7567ed,#48c7e7); box-shadow:0 0 12px rgba(126,109,255,.22); }
+    .score-value { color:#858cac; }
+    .score.winner .score-label,.score.winner .score-value { color:#b8adff; }
+    .score.winner .fill { background:linear-gradient(90deg,#a08dff,#6de2f2); }
+    .message { color:#969dbb; }
+    .message.error { color:#ff929f; }
+    .message.success { color:#76e5c5; }
+    footer { color:#707795; }
+    .loading-layer {
+      position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px;
+      background:rgba(10,12,25,.91); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+      opacity:0; visibility:hidden; transform:translateY(18px) scale(.985);
+      transition:opacity .28s ease, transform .42s cubic-bezier(.2,.8,.2,1), visibility .28s;
+    }
+    .loading-layer.active { opacity:1; visibility:visible; transform:translateY(0) scale(1); }
+    .loader-ring { position:relative; width:54px; height:54px; margin-bottom:7px; border-radius:50%; border:2px solid rgba(157,144,255,.14); border-top-color:#a89aff; border-right-color:#62d8ef; animation:spin .85s linear infinite; box-shadow:0 0 32px rgba(129,112,255,.12); }
+    .loader-ring::before { content:""; position:absolute; inset:7px; border-radius:50%; border:1px solid rgba(100,215,239,.25); }
+    .loader-ring span { position:absolute; width:7px; height:7px; top:-3px; left:21px; border-radius:50%; background:#b5a8ff; box-shadow:0 0 14px #9b8aff; }
+    .loading-layer strong { color:#f2f0ff; font-size:12px; }
+    .loading-layer small { color:#8f96b7; font-size:10px; }
+    .result-stage.reveal .result-caption,.result-stage.reveal .prediction,.result-stage.reveal .confidence { animation:result-rise .58s cubic-bezier(.16,1,.3,1) both; }
+    .result-stage.reveal .prediction { animation-delay:.07s; }
+    .result-stage.reveal .confidence { animation-delay:.13s; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes float-in { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes result-rise { from { opacity:0; transform:translateY(20px) scale(.97); filter:blur(4px); } to { opacity:1; transform:translateY(0) scale(1); filter:blur(0); } }
+    /* Desktop fit: keep the complete workspace visible on a typical laptop viewport. */
+    @media (min-width: 781px) {
+      .shell { width: min(1180px, 100%); padding: 14px 24px 10px; }
+      nav { margin-bottom: 20px; }
+      .hero { margin-bottom: 20px; }
+      .eyebrow { margin-bottom: 8px; }
+      .hero h1 { font-size: clamp(34px, 3.4vw, 46px); line-height: 1.02; letter-spacing: -2.8px; }
+      .hero h1 br { display: none; }
+      .hero p { margin-top: 8px; font-size: 13px; }
+      .workspace { gap: 16px; }
+      .panel { padding: 18px; border-radius: 20px; }
+      .panel-top { margin-bottom: 12px; }
+      .canvas-wrap { aspect-ratio: 1.52; max-height: min(38vh, 350px); }
+      .canvas-tools { margin-top: 12px; }
+      .btn { padding: 9px 12px; }
+      .btn-primary { padding: 10px 16px; }
+      .upload-row { margin-top: 12px; padding: 10px 12px; }
+      .result-stage { min-height: clamp(145px, 21vh, 190px); }
+      .prediction { font-size: 88px; }
+      .section-heading { margin: 14px 0 10px; }
+      .scores { gap: 8px 14px; }
+      .message { padding-top: 10px; }
+      footer { margin-top: 12px; }
+    }
+    @media (max-height: 800px) and (min-width: 781px) {
+      .shell { padding-top: 9px; }
+      nav { margin-bottom: 12px; }
+      .hero { margin-bottom: 12px; }
+      .hero h1 { font-size: 36px; }
+      .panel { padding: 15px; }
+      .canvas-wrap { max-height: 31vh; }
+      .result-stage { min-height: 130px; }
+      .prediction { font-size: 76px; }
+      .section-heading { margin: 10px 0 8px; }
+      .score { font-size: 10px; }
+      .scores { gap: 6px 12px; }
+      footer { margin-top: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; } }
+    @media (max-width:780px) { nav { margin-bottom:48px; } .workspace { grid-template-columns:1fr; } .right-panel { min-height:480px; } }
+    @media (max-width:420px) { .panel { padding:17px; } .canvas-wrap { aspect-ratio:1.05; } }
+
+    /* Startup screen: reports actual setup stages and real training-epoch progress. */
+    .boot-screen { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:24px; background:radial-gradient(ellipse at 50% 42%,rgba(63,69,160,.20),transparent 34%),#070910; opacity:1; visibility:visible; transition:opacity .55s ease,visibility .55s ease; }
+    .boot-screen.done { opacity:0; visibility:hidden; pointer-events:none; }
+    .boot-card { width:min(460px,100%); padding:34px 30px 28px; border:1px solid rgba(170,178,235,.16); border-radius:24px; background:linear-gradient(145deg,rgba(25,29,49,.92),rgba(12,15,27,.96)); box-shadow:0 28px 100px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04); text-align:center; animation:boot-rise .65s cubic-bezier(.2,.8,.2,1) both; }
+    .boot-mark { display:grid; width:52px; height:52px; margin:0 auto 20px; place-items:center; border-radius:17px; background:linear-gradient(145deg,#a99bff,#52d7ed); color:#080a12; font:800 27px Manrope,sans-serif; box-shadow:0 0 42px rgba(139,124,255,.25); }
+    .boot-brand { color:#f6f5ff; font:800 17px Manrope,sans-serif; letter-spacing:-.6px; }
+    .boot-eyebrow { margin-top:26px; color:#b3aaff; font-size:9px; font-weight:700; letter-spacing:2.4px; text-transform:uppercase; }
+    .boot-title { margin:9px 0 8px; color:#f6f3ff; font:800 clamp(25px,5vw,34px)/1.12 Manrope,sans-serif; letter-spacing:-1.3px; }
+    .boot-message { min-height:38px; color:#a4a9c6; font-size:12px; line-height:1.6; }
+    .boot-progress-track { position:relative; height:7px; margin:24px 0 12px; overflow:hidden; border-radius:99px; background:rgba(148,157,205,.15); }
+    .boot-progress-fill { width:4%; height:100%; border-radius:inherit; background:linear-gradient(90deg,#8a76ff,#4fd7ed); box-shadow:0 0 20px rgba(89,194,255,.42); transition:width .45s ease; }
+    .boot-progress-track.indeterminate .boot-progress-fill { width:34% !important; animation:boot-sweep 1.35s ease-in-out infinite; }
+    .boot-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; color:#8f96b7; font-size:10px; }
+    .boot-error { display:none; margin-top:18px; padding:12px; border:1px solid rgba(255,130,150,.2); border-radius:12px; background:rgba(255,90,120,.06); color:#ffadb8; font-size:11px; line-height:1.6; }
+    .boot-screen.failed .boot-error { display:block; }
+    .boot-screen.failed .boot-progress-track { background:rgba(255,130,150,.12); }
+    .boot-screen.failed .boot-progress-fill { width:100% !important; background:#ff8296; animation:none; }
+    .boot-hint { margin-top:20px; color:#707795; font-size:10px; line-height:1.6; }
+    @keyframes boot-sweep { 0% { transform:translateX(-115%); } 55% { transform:translateX(200%); } 100% { transform:translateX(320%); } }
+    @keyframes boot-rise { from { opacity:0; transform:translateY(18px) scale(.985); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @media (prefers-reduced-motion:reduce) { .boot-screen,.boot-progress-fill { transition:none; } .boot-card { animation:none; } .boot-progress-track.indeterminate .boot-progress-fill { animation:none; width:45% !important; } }
+  </style>
+</head>
+<body>
+  <div class="boot-screen" id="bootScreen" role="status" aria-live="polite" aria-label="Preparing HR">
+    <div class="boot-card">
+      <div class="boot-mark" aria-hidden="true">HR</div>
+      <div class="boot-brand">HR</div>
+      <div class="boot-eyebrow">A little machine learning magic</div>
+      <h1 class="boot-title" id="bootTitle">Waking up the AI.</h1>
+      <div class="boot-message" id="bootMessage">Checking whether the model is already installed…</div>
+      <div class="boot-progress-track" id="bootProgressTrack"><div class="boot-progress-fill" id="bootProgressFill"></div></div>
+      <div class="boot-meta"><span id="bootStage">Preparing recognition engine</span><strong id="bootPercent">Starting</strong></div>
+      <div class="boot-error" id="bootError"></div>
+      <div class="boot-hint" id="bootHint">First launch downloads about 55 MB of training data and trains the model. Future launches use the saved model.</div>
+    </div>
+  </div>
+  <div class="shell">
+    <nav>
+      <div class="brand"><span class="brand-mark">HR</span> HR</div>
+      <div class="nav-right"><span class="dot" id="statusDot"></span><span id="serviceStatus">Checking recognition engine…</span></div>
+    </nav>
+
+    <header class="hero">
+      <div class="eyebrow">A little machine learning magic</div>
+      <h1>Handwriting,<br><span>understood.</span></h1>
+      <p>Draw a digit. Let the model do the thinking.</p>
+    </header>
+
+    <main class="workspace">
+      <section class="panel" aria-labelledby="canvasTitle">
+        <div class="panel-top">
+          <div class="panel-title" id="canvasTitle">Your canvas</div>
+          <span class="pill">0 — 9 · DRAW OR UPLOAD</span>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas id="board" aria-label="Drawing area for a digit"></canvas>
+          <span class="canvas-label">Draw with your mouse or finger</span>
+        </div>
+
+        <div class="canvas-tools">
+          <div class="tool-group">
+            <button class="btn" id="clearBtn" type="button">↶&nbsp; Clear</button>
+            <button class="btn" id="sampleBtn" type="button">✦&nbsp; Try sample</button>
+          </div>
+          <button class="btn btn-primary" id="predictBtn" type="button">Recognise digit&nbsp; →</button>
+        </div>
+
+        <div class="upload-row">
+          <div class="upload-copy">
+            <strong>Have a digit saved?</strong>
+            <span>Choose a PNG, JPG or WEBP image · up to 5 MB</span>
+          </div>
+          <label class="btn" for="fileInput">↑&nbsp; Upload image</label>
+          <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp">
+        </div>
+      </section>
+
+      <section class="panel right-panel" aria-labelledby="resultTitle">
+        <div class="panel-top">
+          <div class="panel-title" id="resultTitle">Recognition result</div>
+          <span class="pill">DIGIT CLASSIFIER</span>
+        </div>
+
+        <div class="result-stage" id="resultStage" aria-live="polite">
+          <div class="result-orb" aria-hidden="true"></div>
+          <div class="result-caption">THE MODEL'S GUESS</div>
+          <div class="prediction empty" id="prediction">—</div>
+          <div class="confidence" id="confidence">Your next digit is one stroke away</div>
+          <div class="loading-layer" id="loadingLayer" aria-hidden="true">
+            <div class="loader-ring"><span></span></div>
+            <strong>Reading your handwriting</strong>
+            <small>Finding the shape…</small>
+          </div>
+        </div>
+
+        <div class="section-heading">
+          <strong>Confidence by digit</strong>
+          <span>Probability distribution</span>
+        </div>
+        <div class="scores" id="scores"></div>
+        <div class="message" id="message" role="status" aria-live="polite">Draw or upload a digit, then select Recognise digit.</div>
+      </section>
+    </main>
+
+    <footer>
+      <span>HR · Handwriting recognition.</span>
+      <span>Private by design · No account required</span>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("board");
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      const byId = (id) => document.getElementById(id);
+      const prediction = byId("prediction");
+      const confidence = byId("confidence");
+      const message = byId("message");
+      const predictButton = byId("predictBtn");
+      let drawing = false;
+      let hasInk = false;
+      let requestId = 0;
+      let uploadedImageData = null;
+      const resultStage = byId("resultStage");
+      const loadingLayer = byId("loadingLayer");
+
+      for (let digit = 0; digit < 10; digit += 1) {
+        const row = document.createElement("div");
+        row.className = "score";
+        row.id = `score-${digit}`;
+        row.innerHTML = `
+          <span class="score-label">${digit}</span>
+          <div class="track"><div class="fill" id="fill-${digit}"></div></div>
+          <span class="score-value" id="value-${digit}">—</span>`;
+        byId("scores").appendChild(row);
+      }
+
+      function paintBackground() {
+        context.fillStyle = "#090b16";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        const previous = document.createElement("canvas");
+        previous.width = canvas.width;
+        previous.height = canvas.height;
+        if (hasInk && previous.width && previous.height) {
+          previous.getContext("2d").drawImage(canvas, 0, 0);
+        }
+
+        canvas.width = Math.max(1, Math.round(rect.width * ratio));
+        canvas.height = Math.max(1, Math.round(rect.height * ratio));
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+        paintBackground();
+        if (hasInk && previous.width && previous.height) {
+          context.drawImage(previous, 0, 0, previous.width, previous.height, 0, 0, rect.width, rect.height);
+        }
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        context.strokeStyle = "#fff";
+        context.fillStyle = "#fff";
+        context.lineWidth = Math.max(11, rect.width * 0.045);
+      }
+
+      const resizeObserver = new ResizeObserver(resizeCanvas);
+      resizeObserver.observe(canvas);
+
+      function getPoint(event) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      }
+
+      canvas.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        canvas.setPointerCapture(event.pointerId);
+        drawing = true;
+        hasInk = true;
+        uploadedImageData = null;
+        const point = getPoint(event);
+        context.beginPath();
+        context.moveTo(point.x, point.y);
+        context.lineTo(point.x + 0.1, point.y + 0.1);
+        context.stroke();
+      });
+
+      canvas.addEventListener("pointermove", (event) => {
+        if (!drawing) return;
+        const point = getPoint(event);
+        context.lineTo(point.x, point.y);
+        context.stroke();
+      });
+
+      function stopDrawing() {
+        if (!drawing) return;
+        drawing = false;
+        context.closePath();
+      }
+
+      canvas.addEventListener("pointerup", stopDrawing);
+      canvas.addEventListener("pointercancel", stopDrawing);
+      canvas.addEventListener("lostpointercapture", stopDrawing);
+
+      function resetResult() {
+        resultStage.classList.remove("reveal");
+        loadingLayer.classList.remove("active");
+        prediction.textContent = "—";
+        prediction.classList.add("empty");
+        confidence.textContent = "Waiting for your drawing";
+        for (let digit = 0; digit < 10; digit += 1) {
+          byId(`score-${digit}`).classList.remove("winner");
+          byId(`fill-${digit}`).style.width = "0%";
+          byId(`value-${digit}`).textContent = "—";
+        }
+      }
+
+      function setMessage(text, type = "") {
+        message.className = `message${type ? ` ${type}` : ""}`;
+        message.textContent = text;
+      }
+
+      function clearCanvas() {
+        requestId += 1;
+        hasInk = false;
+        uploadedImageData = null;
+        predictButton.disabled = false;
+        predictButton.textContent = "Recognise digit  →";
+        paintBackground();
+        resetResult();
+        setMessage("Canvas cleared. Draw another digit whenever you’re ready.");
+      }
+
+      byId("clearBtn").addEventListener("click", clearCanvas);
+
+      async function recognise(sourceCanvas = canvas) {
+        if (!hasInk) {
+          setMessage("Draw a digit or upload an image first.", "error");
+          return;
+        }
+
+        const thisRequest = ++requestId;
+        predictButton.disabled = true;
+        predictButton.textContent = "Reading…";
+        resultStage.classList.remove("reveal");
+        loadingLayer.classList.add("active");
+        setMessage("Analysing the shape…");
+
+        try {
+          const imagePayload = uploadedImageData || sourceCanvas.toDataURL("image/png");
+          const response = await fetch("/api/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: imagePayload }),
+          });
+          const data = await response.json().catch(() => ({ error: "The server returned an unreadable response." }));
+          if (!response.ok) throw new Error(data.error || `Recognition failed (${response.status}).`);
+
+          if (thisRequest !== requestId) return;
+          const predictedDigit = Number(data.prediction);
+          const predictedConfidence = Number(data.confidence);
+          if (!Number.isInteger(predictedDigit) || predictedDigit < 0 || predictedDigit > 9 || !Number.isFinite(predictedConfidence) || !data.probabilities || typeof data.probabilities !== "object") {
+            throw new Error("The model returned an incomplete result. Please try again.");
+          }
+
+          const values = [];
+          for (let digit = 0; digit < 10; digit += 1) {
+            const score = Number(data.probabilities[String(digit)] ?? 0);
+            if (!Number.isFinite(score) || score < 0 || score > 100) throw new Error("The model returned invalid confidence values.");
+            values.push(score);
+          }
+
+          loadingLayer.classList.remove("active");
+          resultStage.classList.remove("reveal");
+          void resultStage.offsetWidth;
+          resultStage.classList.add("reveal");
+          prediction.textContent = String(predictedDigit);
+          prediction.classList.remove("empty");
+          confidence.innerHTML = `Confidence <b>${predictedConfidence.toFixed(1)}%</b>`;
+          values.forEach((score, digit) => {
+            byId(`fill-${digit}`).style.width = `${score}%`;
+            byId(`value-${digit}`).textContent = `${score.toFixed(1)}%`;
+            byId(`score-${digit}`).classList.toggle("winner", digit === predictedDigit);
+          });
+          setMessage("Recognition complete. Try another digit to compare results.", "success");
+        } catch (error) {
+          if (thisRequest === requestId) {
+            loadingLayer.classList.remove("active");
+            setMessage(error.message || "Something went wrong. Please try again.", "error");
+          }
+        } finally {
+          if (thisRequest === requestId) {
+            loadingLayer.classList.remove("active");
+            predictButton.disabled = false;
+            predictButton.textContent = "Recognise digit  →";
+          }
+        }
+      }
+
+      predictButton.addEventListener("click", () => recognise());
+
+      byId("fileInput").addEventListener("change", (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        if (!/image\/(png|jpeg|webp)/i.test(file.type)) {
+          setMessage("Please choose a PNG, JPG or WEBP image.", "error");
+          event.target.value = "";
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          setMessage("That image is too large. Choose a file under 5 MB.", "error");
+          event.target.value = "";
+          return;
+        }
+
+        requestId += 1;
+        predictButton.disabled = false;
+        predictButton.textContent = "Recognise digit  →";
+        const reader = new FileReader();
+        reader.onload = () => {
+          uploadedImageData = String(reader.result || "");
+          const image = new Image();
+          image.onload = () => {
+            hasInk = true;
+            paintBackground();
+            const cw = canvas.clientWidth;
+            const ch = canvas.clientHeight;
+            const scale = Math.min(cw / image.width, ch / image.height) * 0.88;
+            const drawW = image.width * scale;
+            const drawH = image.height * scale;
+            context.save();
+            context.fillStyle = "#fff";
+            context.fillRect(0, 0, cw, ch);
+            context.drawImage(image, (cw - drawW) / 2, (ch - drawH) / 2, drawW, drawH);
+            context.restore();
+            resetResult();
+            setMessage("Image ready. The original image will be analysed without stretching.");
+          };
+          image.onerror = () => {
+            uploadedImageData = null;
+            setMessage("That image could not be loaded. Try another file.", "error");
+          };
+          image.src = uploadedImageData;
+        };
+        reader.onerror = () => setMessage("Could not read that file. Please try another image.", "error");
+        reader.readAsDataURL(file);
+        event.target.value = "";
+      });
+
+      byId("sampleBtn").addEventListener("click", () => {
+        clearCanvas();
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        context.save();
+        context.strokeStyle = "#fff";
+        context.lineWidth = Math.max(12, width * 0.055);
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        context.beginPath();
+        context.moveTo(width * 0.34, height * 0.31);
+        context.quadraticCurveTo(width * 0.57, height * 0.12, width * 0.66, height * 0.3);
+        context.quadraticCurveTo(width * 0.82, height * 0.53, width * 0.47, height * 0.73);
+        context.lineTo(width * 0.34, height * 0.78);
+        context.lineTo(width * 0.69, height * 0.78);
+        context.stroke();
+        context.restore();
+        hasInk = true;
+        uploadedImageData = null;
+        setMessage("Sample digit drawn. Press Recognise digit to see the model’s guess.");
+      });
+
+      // Poll the Flask process for live download/training stages. OpenML does not
+      // expose byte-level progress, so the download phase uses an honest animated
+      // indeterminate bar; training progress is based on completed epochs.
+      const bootScreen = byId("bootScreen");
+      let bootPollStopped = false;
+      async function pollModelStatus() {
+        if (bootPollStopped) return;
+        try {
+          const response = await fetch("/api/status", { cache: "no-store" });
+          if (!response.ok) throw new Error("The server did not return setup status.");
+          const status = await response.json();
+          byId("bootStage").textContent = status.stage || "Preparing recognition engine";
+          byId("bootMessage").textContent = status.message || "Preparing the model…";
+          const track = byId("bootProgressTrack");
+          const fill = byId("bootProgressFill");
+          const percent = byId("bootPercent");
+          const state = status.state || "starting";
+          track.classList.toggle("indeterminate", state === "downloading");
+          if (state === "downloading") {
+            fill.style.width = "34%";
+            percent.textContent = "Downloading…";
+            byId("bootTitle").textContent = "Bringing the AI to life.";
+          } else {
+            const progress = Math.max(0, Math.min(100, Number(status.progress) || 0));
+            fill.style.width = `${progress}%`;
+            percent.textContent = `${progress}%`;
+            byId("bootTitle").textContent = state === "training" ? "Learning the digits." : state === "saving" ? "Almost ready." : state === "loading" ? "Loading your AI." : "Waking up the AI.";
+          }
+          if (state === "ready" || status.ready) {
+            bootPollStopped = true;
+            fill.style.width = "100%";
+            percent.textContent = "100%";
+            byId("bootTitle").textContent = "Ready when you are.";
+            byId("bootMessage").textContent = "HR is ready. Draw a digit or upload an image.";
+            byId("serviceStatus").textContent = "AI engine ready";
+            window.setTimeout(() => bootScreen.classList.add("done"), 550);
+            return;
+          }
+          if (state === "error") {
+            bootPollStopped = true;
+            bootScreen.classList.add("failed");
+            byId("bootTitle").textContent = "The setup hit a snag.";
+            byId("bootError").textContent = status.error || "Check your internet connection and restart the app.";
+            byId("bootHint").textContent = "After checking your connection, stop the Flask server with Ctrl+C and run python app.py again.";
+            byId("serviceStatus").textContent = "Setup needs attention";
+            byId("statusDot").style.background = "#ff8296";
+            setMessage(status.error || "Model setup failed. Restart the Flask app and try again.", "error");
+            return;
+          }
+        } catch (_error) {
+          byId("bootStage").textContent = "Connecting to the local server";
+          byId("bootMessage").textContent = "Waiting for HR to report its setup progress…";
+          byId("bootPercent").textContent = "Connecting";
+          byId("bootProgressTrack").classList.add("indeterminate");
+          byId("serviceStatus").textContent = "Connecting to AI engine…";
+        }
+        window.setTimeout(pollModelStatus, 900);
+      }
+      pollModelStatus();
+    })();
+  </script>
+</body>
+</html>
