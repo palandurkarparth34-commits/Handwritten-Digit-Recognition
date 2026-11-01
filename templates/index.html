@@ -120,11 +120,15 @@
     }
     .shell { width: min(1180px, 100%); padding-top: 30px; }
     nav { margin-bottom: 76px; animation: float-in .7s cubic-bezier(.2,.8,.2,1) both; }
-    .brand { text-transform: lowercase; color: #f6f5ff; letter-spacing: -.8px; }
+    .brand { text-transform: none; color: #f6f5ff; letter-spacing: -.8px; white-space: nowrap; }
     .brand-mark {
       background: linear-gradient(145deg, #9b8aff, #52d7ed); color: #090a12;
       border-radius: 12px; box-shadow: 0 0 30px rgba(139,124,255,.25);
+      font-size: 20px; font-weight: 800;
     }
+    .brand-name { color: #f6f5ff; font-weight: 800; letter-spacing: -.7px; }
+    .boot-mark { font-size: 29px; letter-spacing: -2px; }
+    .boot-mark .mark-r { display: none; }
     .nav-right { color: #a8adc8; }
     .dot { background: #6be6c0; box-shadow: 0 0 0 4px rgba(107,230,192,.09), 0 0 18px rgba(107,230,192,.65); }
     .hero { margin-bottom: 46px; animation: float-in .8s .08s cubic-bezier(.2,.8,.2,1) both; }
@@ -243,7 +247,19 @@
       footer { margin-top: 8px; }
     }
     @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; } }
-    @media (max-width:780px) { nav { margin-bottom:48px; } .workspace { grid-template-columns:1fr; } .right-panel { min-height:480px; } }
+    @media (max-width:780px) {
+      .shell { width:100%; max-width:100%; padding:20px 16px 36px; }
+      nav { width:100%; min-width:0; margin-bottom:30px; }
+      .workspace { width:100%; min-width:0; grid-template-columns:minmax(0,1fr); }
+      .panel, .hero, footer { min-width:0; max-width:100%; }
+      .right-panel { min-height:420px; }
+      .hero { margin-bottom:24px; padding-inline:4px; }
+      .hero h1 { font-size:clamp(30px,7.5vw,44px); line-height:1.08; letter-spacing:-1.8px; overflow-wrap:anywhere; }
+      .hero h1 br { display:none; }
+      .hero p { font-size:13px; }
+      .nav-right { font-size:10px; }
+    }
+    @media (max-width:420px) { .brand { gap:8px; font-size:16px; } .brand-mark { width:32px; height:32px; } .nav-right { max-width:130px; } }
     @media (max-width:420px) { .panel { padding:17px; } .canvas-wrap { aspect-ratio:1.05; } }
 
     /* Startup screen: reports actual setup stages and real training-epoch progress. */
@@ -272,7 +288,7 @@
 <body>
   <div class="boot-screen" id="bootScreen" role="status" aria-live="polite" aria-label="Preparing HR">
     <div class="boot-card">
-      <div class="boot-mark" aria-hidden="true">HR</div>
+      <div class="boot-mark" aria-hidden="true">H<span class="mark-r">R</span></div>
       <div class="boot-brand">HR</div>
       <div class="boot-eyebrow">A little machine learning magic</div>
       <h1 class="boot-title" id="bootTitle">Waking up the AI.</h1>
@@ -285,7 +301,7 @@
   </div>
   <div class="shell">
     <nav>
-      <div class="brand"><span class="brand-mark">HR</span> HR</div>
+      <div class="brand" aria-label="HR"><span class="brand-mark" aria-hidden="true">H</span><span class="brand-name">HR</span></div>
       <div class="nav-right"><span class="dot" id="statusDot"></span><span id="serviceStatus">Checking recognition engine…</span></div>
     </nav>
 
