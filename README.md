@@ -1,6 +1,6 @@
-# HANDWRITTEN DIGIT RECOGNITION WEB APP
+# HANDWRITTEN DIGIT RECOGNITION 
 
-A responsive handwritten digit recognition web app. Draw a digit in the browser or upload an image, then inspect the predicted number and its confidence distribution.
+A responsive handwritten digit recognition . Draw a digit in the browser or upload an image, then inspect the predicted number and its confidence distribution.
 
 ## What's included
 
@@ -14,12 +14,12 @@ A responsive handwritten digit recognition web app. Draw a digit in the browser 
 
 ## Run locally
 
-Python 3.12 is recommended for the smoothest installation. The app code is compatible with recent Python releases where the listed packages provide wheels.
+Python 3.15 is recommended for the smoothest installation. The app code is compatible with recent Python releases where the listed packages provide wheels.
 
 ### Windows PowerShell
 
 ```powershell
-py -3.12 -m venv .venv
+py -3.15 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
