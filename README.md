@@ -1,6 +1,6 @@
-# HR
+# HANDWRITTEN DIGIT RECOGNITION WEB APP
 
-A responsive handwritten digit recognition app. Draw a digit in the browser or upload an image, then inspect the predicted number and its confidence distribution.
+A responsive handwritten digit recognition web app. Draw a digit in the browser or upload an image, then inspect the predicted number and its confidence distribution.
 
 ## What's included
 
